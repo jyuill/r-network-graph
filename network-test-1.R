@@ -7,13 +7,13 @@ library(tidyverse)
 ## set up team list ####
 team_members <- tribble(
   ~id, ~name,
-  1, "John Yuill",
-  2, "Brent Langton",
-  3, "Isha Kataria",
-  4, "Karthik Sankaran",
-  5, "Syed Naqvi",
-  6, "Tom Funk",
-  7, "Vaishali Nirwan"
+  1, "John Y",
+  2, "Bret L",
+  3, "Iskar Kat",
+  4, "Kartum Shankar",
+  5, "Sam Nagli",
+  6, "Tim Fork",
+  7, "Vivian Nelson"
 )
 
 ## identify relationships ####
@@ -51,8 +51,18 @@ E(net1)
 ecount(net1)
 
 ## visualize
-
 ggraph(net1, layout='with_kk')+
   geom_edge_link(aes(alpha=weight))+
   geom_node_point()+
   geom_node_text(aes(label=name), repel=TRUE)
+
+ggraph(net1, layout='in_circle')+
+  geom_edge_link(aes(alpha=weight))+
+  geom_node_point()+
+  geom_node_text(aes(label=name), repel=TRUE)
+
+ggraph(net1, layout='on_grid')+
+  geom_edge_link(aes(alpha=weight))+
+  geom_node_point()+
+  geom_node_text(aes(label=name), repel=TRUE)
+
