@@ -19,12 +19,12 @@ team_members <- tribble(
 ## identify relationships ####
 relns <- tribble(
   ~from, ~to, ~weight,
-  1, 2, 4,
-  1, 3, 4,
-  1, 4, 4,
-  1, 5, 4,
-  1, 6, 4,
-  1, 7, 4,
+  1, 2, 14,
+  1, 3, 14,
+  1, 4, 14,
+  1, 5, 14,
+  1, 6, 14,
+  1, 7, 14,
   2, 3, 1,
   2, 4, 1,
   2, 5, 1,
@@ -60,6 +60,28 @@ ggraph(net1, layout='in_circle')+
   geom_edge_link(aes(alpha=weight), color='lightblue')+
   geom_node_point(size=12, color='lightblue')+
   geom_node_text(aes(label=name), color='blue', repel=TRUE)+theme_classic()+
+  coord_flip()+
+  theme(legend.position = 'none')
+
+ggraph(net1, layout='in_circle')+
+  geom_edge_bend(aes(alpha=weight))+
+  geom_node_point(size=12, color='lightblue')+
+  geom_node_text(aes(label=name), color='blue', repel=TRUE)+theme_classic()+
+  coord_flip()+
+  theme(legend.position = 'none')
+
+ggraph(net1, layout='in_circle')+
+  geom_edge_fan(aes(alpha=weight))+
+  geom_node_point(size=12, color='lightblue')+
+  geom_node_text(aes(label=name), color='blue', repel=TRUE)+theme_classic()+
+  coord_flip()+
+  theme(legend.position = 'none')
+
+ggraph(net1, layout='in_circle')+
+  geom_edge_hive(aes(alpha=weight))+
+  geom_node_point(size=12, color='lightblue')+
+  geom_node_text(aes(label=name), color='blue', repel=TRUE)+theme_classic()+
+  coord_flip()+
   theme(legend.position = 'none')
 
 ggraph(net1, layout='on_grid')+
