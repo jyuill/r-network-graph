@@ -1,0 +1,131 @@
+---
+title: "Network Analysis - Tidyverse"
+author: "`r Sys.getenv('USER')`"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      message=FALSE,
+                      warning=FALSE,
+                      fig.height=3.5,
+                      fig.width=6)
+
+library(igraph)
+library(ggraph)
+library(visNetwork)
+library(networkdata)
+library(tidyverse)
+library(lubridate)
+library(here)
+library(PerformanceAnalytics)
+library(plotly)
+library(scales)
+library(gridExtra)
+library(DT)
+
+```
+
+## Intro
+
+Notes from DataCamp course ['Network Analytics with Tidyverse'](https://learn.datacamp.com/courses/network-analysis-in-the-tidyverse)
+
+### Other References
+
+* [Network Analytics with R blogpost](https://www.jessesadler.com/post/network-analysis-with-r/)
+
+### Key Concepts 01
+
+Networks are comprised of:
+
+* **Nodes** (aka vertices, points): the 'things' in the network
+    + must be identified by unique id
+* **Edges** (aka links, ties): the connections between the things
+    + can be directed or undirected relationships between the nodes
+    + edge can have attributes
+    + attributes can be used in weighting
+
+Key packages in R for network analysis:
+
+* igraph: network data manipulation and diagrams.
+* ggraph: extends ggplot for network-relevant dimensions.
+* visNetwork: interactive network diagrams.
+* networkdata: ton of network datasets for exploration, demonstration, learning.
+
+Where does tidyverse come in?
+
+* Tidyverse concepts can be applied to network analysis and are sometimes integrated into other network analysis systems.
+
+Where does igraph come in?
+
+igraph is designed for organizing and working graph objects. Once a network is set up as igraph object, we can work with it in various ways, and this course is mainly about using igraph objects with tidyverse. 
+
+### igraph data/setup
+
+The course uses data on terrorist network involved in Madrid train bombing. I was able to obtain network data on the same group via networkdata package - it is identified there as 'covert_30'. [detail doc here](https://www.rdocumentation.org/packages/networkdata/versions/0.1.4/topics/covert_30)
+
+```{r}
+## madrid train bombing terrorist network data
+madrid <- covert_30
+## list of 25 igraph objects, based on different characteristics of the network
+## can get info on all the igraph objects by subsetting the list:
+
+#madrid[1:25] ## to look at them all
+
+## or individual ones by:
+madrid[[25]]
+```
+
+The top section provides info on the igraph object:
+
+* IGRAPH: indicates igraph object ;)
+* 03db05c: not sure, don't think it matters
+* UNW-: indicates this is 'Undirected', 'Named', Weighted', '-' not Bipartite
+* MADRID_TIE_YEAR: name of the graph
+* attr: attributes, dimensions, and then showing edges based on vertex names.
+
+Can save the object with whatever name and can also:
+
+* get list of vertices
+* get list of edges
+* plot the network graph (simple plot - more to come on this later...)
+
+```{r}
+## SAVE selected object:
+madrid_25 <- madrid[[25]]
+## list of vertices (V) and edges (E)
+V(madrid_25)
+E(madrid_25)
+
+## plot the network
+plot.igraph(madrid_25)
+```
+
+### Tidyverse setup
+
+#### Data frame from igraph object
+
+For purposes of the course and working with tidyverse, we convert igraph object to data frame:
+
+* can create data frames based on vertices, edges, or both at the same time (still two data frames)
+* course uses separate vertices (nodes) and edges (ties) data frames
+
+```{r}
+## convert to data frame based on what= 'vertices', 'edges', 'both'
+madrid_25_dfs <- get.data.frame(madrid_25, what='both')
+madrid_25_dfv <- get.data.frame(madrid_25, what='vertices')
+madrid_25_dfe <- get.data.frame(madrid_25, what='edges')
+
+## for course examples:
+g <- madrid_25
+nodes <- madrid_25_dfv
+ties <- madrid_25_dfe
+
+head(nodes)
+head(ties)
+```
+
