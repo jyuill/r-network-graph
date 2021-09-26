@@ -74,7 +74,7 @@ madrid <- covert_30
 ## list of 25 igraph objects, based on different characteristics of the network
 ## can get info on all the igraph objects by subsetting the list:
 
-#madrid[1:25] ## to look at them all
+#madrid ## to look at them all
 
 ## or individual ones by:
 madrid[[25]]
@@ -104,6 +104,17 @@ E(madrid_25)
 ## plot the network
 plot.igraph(madrid_25)
 ```
+
+More info about the igraph object:
+
+* vertex attributes: shows attributes of vertices, in this case only name
+* edge attributes: shows the actual attributes of edges, in this case weight
+
+```{r}
+vertex_attr(madrid_25)
+edge_attr(madrid_25)
+```
+
 
 ### Tidyverse setup
 

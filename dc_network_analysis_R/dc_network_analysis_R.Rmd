@@ -1,0 +1,267 @@
+---
+title: "Network Analytics in R"
+author: "`r Sys.getenv('USER')`"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      message=FALSE,
+                      warning=FALSE,
+                      fig.height=3.5,
+                      fig.width=6)
+
+library(igraph)
+library(igraphdata) ## data sets for working with igraph
+
+library(tidyverse)
+library(lubridate)
+library(here)
+library(PerformanceAnalytics)
+library(plotly)
+library(scales)
+library(gridExtra)
+library(DT)
+
+```
+
+## Intro 
+
+Notes from DataCamp course ['Network Analysis in R'](https://learn.datacamp.com/courses/network-analysis-in-r).
+
+Focus on social networks.
+
+### Key Concepts 01
+
+* Vertices: aka nodes, in this case, people in the social network.
+* Edges: links between the vertices.
+* Adjacency matrix: matrix with vertices as rows and columns, with values at the intersections representing edges
+    + at minimum, 0 = no edge, 1 = edge exists between the vertices; can be higher values to represent attributes.
+* Edgelist: list of combinations of vertices with edge values.
+
+### Get Data
+
+```{r}
+## get list of datasets in igraphdata
+#data(package='igraphdata')
+## import data set
+data('UKfaculty', package='igraphdata')
+
+## get description of UKfaculty
+UKfaculty
+
+```
+
+From this we can tell:
+
+* Directed graph
+* not Named graph: no 'name' attribute for vertices
+* Weighted graph
+* not Bipartite (don't know what this is, not sure it comes up often)
+* 81 vertices
+* 817 edges
+* attributes: 
+    + graph: Type (character), Date (character), Citation (character), Author (character), 
+    + vertices: Group (number)
+    + edges: weight (edges/number)
+* view of some edges
+
+[Some explanation in official documentation here](https://igraph.org/r/doc/aaa-igraph-package.html)
+
+#### Plot
+
+Basic plot - we'll do better later. ;)
+
+```{r}
+## VERY useful for setting size - need to re-run for every code block with charts
+par(mar=c(0,0,0,0))
+
+## basic plot
+plot(UKfaculty)
+```
+
+#### Additional Info
+
+```{r}
+## list of vertices
+V(UKfaculty)
+## list of edges
+E(UKfaculty)
+
+## number of edges
+gsize(UKfaculty)
+## number of vertices
+gorder(UKfaculty)
+```
+
+#### Attributes
+
+Can also get attributes of the network graph itself, vertices and edges:
+
+```{r}
+graph_attr(UKfaculty)
+vertex_attr(UKfaculty)
+edge_attr(UKfaculty)
+```
+
+### Add Attributes
+
+* Note graph name change for convenience and to save original
+
+Vertex attributes
+
+```{r}
+## using baby names data retrieved from https://www.ssa.gov/oact/babynames/limits.html, just for fun
+## saved as: 'data/baby-names-1880'
+new_attributes <- read_csv('data/baby-names-1880')
+## get list same length as number of vertices
+new_att <- sample_n(new_attributes, size=gorder(UKfaculty))
+
+## change name for backup
+ukf <- UKfaculty
+
+ukf <- set_vertex_attr(ukf, name='leader', value=new_att$name)
+ukf <- set_vertex_attr(ukf, name='type', value=new_att$gender)
+ukf <- set_vertex_attr(ukf, name='size', value=new_att$count)
+
+## check vertex attributes
+vertex_attr(ukf)
+
+## view the vertices
+V(ukf)[[1:5]]
+```
+
+Sweet! More attributes to understand characteristics of the network.
+
+Edge Attributes: set and view
+
+```{r}
+## add an attribute to edges to indicate strength
+strength <- sample(x=seq(1:20), size=gsize(ukf), replace=TRUE)
+
+ukf <- set_edge_attr(ukf, name='strength', value=strength)
+
+edge_attr(ukf)
+```
+
+### Subset Edges
+
+```{r}
+## view first 5 in edge list
+E(ukf)[[1:5]]
+
+## select edges that include '12' in either 'tail' or 'head'
+E(ukf)[[inc(12)]]
+## select edges where strength =17
+E(ukf)[[strength==17]]
+```
+
+
+## Alternate dataset 
+
+Can investigate this one in parallel - might be closer case to the course, as well as practical relevance.
+
+### Creating graph from data frames
+
+```{r}
+
+t_nodes <- data.frame(names=c('BL','CL','EB','JA','JY','IK','KK','MM','SN','TF','VN'),
+                    role=c('Sr Analyst','Adv Analyst', 'Jr Analyst','Analyst','Sr Manager','Analyst','Engineer','Manager','Sr Analyst','Sr Analyst','Sr Analyst'))
+
+t_edges <- tribble(
+  ~from, ~to, ~weight,
+  "BL", "JY", 4,
+  "CL", "JY", 3,
+  "EB", "MM", 2,
+  "JA", "JY", 1,
+  "IK", "MM", 1,
+  "KK", "JY", 1,
+  "MM", "JY", 1,
+  "SN", "MM", 3,
+  "TF", "JY", 1,
+  "VN", "JY", 2)
+
+
+t <- graph_from_data_frame(d=t_edges, directed=TRUE, vertices=t_nodes)
+
+t
+vertex_attr(t)
+edge_attr(t)
+```
+
+#### Plot
+
+```{r}
+## VERY useful for setting size - need to re-run for every code block with charts
+par(mar=c(0,0,0,0))
+plot(t)
+```
+
+```{r}
+## add attribute to network vertices
+t <- set_vertex_attr(t, name='gender', value=c('M','F','F','M','M','F','M','F','M','M','F'))
+vertex_attr(t)
+```
+
+```{r}
+## set par for better sizing
+par(mar=c(0,0,0,0))
+
+V(t)$color <- ifelse(V(t)$gender=='F','orange','dodgerblue')
+
+plot(t, vertex.label.color="white")
+```
+
+* node color based on gender
+* labels set to white
+
+### Other Plot Options
+
+```{r}
+## very useful in increasing default size! need to run with every code block that has plot
+par(mar=c(0,0,0,0))
+
+## recommended in other course
+plot(t, layout=layout_with_kk(t))
+
+## circle
+plot(t, layout=layout_in_circle)
+
+## fruchterman-reingold
+plot(t, layout=layout_with_fr)
+
+## layout as tree (doesn't seem to work - could be due to graph structure)
+plot(t, layout=layout_as_tree(t))
+
+## layout as star - looks like some inappropriate crossing (in some versions)
+plot(t, layout=layout_as_star)
+
+## igraph's choice
+m1 <- layout_nicely(t)
+plot(t, layout=m1)
+
+```
+
+#### Parameters
+
+[Info on igraph plot parameters](https://www.r-graph-gallery.com/248-igraph-plotting-parameters.html)
+
+```{r}
+## set par for better sizing
+par(mar=c(0,0,0,0))
+
+## shape options are basically circle or square :( (there are variations but hard to tell what difference)
+V(t)$shape <- ifelse(V(t)$role=='Sr Manager','square',
+                     ifelse(V(t)$role=='Manager', 'rectangle','circle'))
+## default size = 15; max appears to be 24
+V(t)$size <- ifelse(V(t)$role=='Sr Manager',22,
+                     ifelse(V(t)$role=='Manager', 20,18))
+
+plot(t, vertex.label.color="white")
+
+```
+
