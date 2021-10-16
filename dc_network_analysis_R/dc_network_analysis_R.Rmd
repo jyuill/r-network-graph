@@ -35,7 +35,7 @@ Notes from DataCamp course ['Network Analysis in R'](https://learn.datacamp.com/
 
 Focus on social networks.
 
-### Key Concepts 01
+###>  Key Concepts 01
 
 * Vertices: aka nodes, in this case, people in the social network.
 * Edges: links between the vertices.
@@ -47,7 +47,7 @@ Focus on social networks.
 
 ```{r}
 ## get list of datasets in igraphdata
-#data(package='igraphdata')
+data(package='igraphdata')
 ## import data set
 data('UKfaculty', package='igraphdata')
 
@@ -250,10 +250,15 @@ plot(t, layout=m1)
 
 [Info on igraph plot parameters](https://www.r-graph-gallery.com/248-igraph-plotting-parameters.html)
 
+* Node shape & size
+* Edge weight
+* Layout algo
+
 ```{r}
 ## set par for better sizing
 par(mar=c(0,0,0,0))
 
+## NODE shape & size
 ## shape options are basically circle or square :( (there are variations but hard to tell what difference)
 V(t)$shape <- ifelse(V(t)$role=='Sr Manager','square',
                      ifelse(V(t)$role=='Manager', 'rectangle','circle'))
@@ -261,7 +266,155 @@ V(t)$shape <- ifelse(V(t)$role=='Sr Manager','square',
 V(t)$size <- ifelse(V(t)$role=='Sr Manager',22,
                      ifelse(V(t)$role=='Manager', 20,18))
 
-plot(t, vertex.label.color="white")
+## EDGE weight
+## set edge width
+w1 <- E(t)$weight
 
+## LAYOUT
+## set layout -> really, default 'layout_nicely' seems to be the best option, usually
+lay <- layout_with_fr(t)
+
+plot(t, vertex.label.color="white",
+     edge.width=w1,
+     edge.color='blue',
+     layout=lay)
+```
+
+Edge weights may need more relative separation:
+
+```{r}
+table(t_edges$weight)
+```
+
+## Plotting Original Dataset
+
+Explore plotting techniques with larger data set.
+
+```{r, fig.height=8, fig.width=9}
+par(mar=c(0,0,0,0))
+#ukf
+#vertex_attr(ukf)
+#edge_attr(ukf)
+
+## set node color
+V(ukf)$color <- ifelse(V(ukf)$type=='F','red','dodgerblue')
+
+## set size -> reduce variation to reasonable level
+sizes <- V(ukf)$size
+sizes <- ifelse(sizes>20, 20, ifelse(
+  sizes<12,12, sizes
+))
+
+## plot with parameters
+plot(ukf, edge.width=E(ukf)$weight,
+     edge.color='blue',
+     vertex.size=sizes,
+     vertex.label.color='white',
+     layout=layout_with_fr(ukf))
+```
+
+## Directional example
+
+* check out another data set for consideration from igraphdata collection
+* ideally looking for spread of contagious disease
+
+```{r}
+## possible alternative data set for exploration
+## check handy options
+#data(package='igraphdata')
+
+## import prospective data set
+data('enron', package='igraphdata')
+## check meta data
+enron
+## confirm count of nodes
+gorder(enron)
+## confirm count of edges
+gsize(enron)
+
+## get random sample of nodes - obviously could plunk in some numbers -> getting extra practice with 'sample' in this context ;)
+V(enron)[[sample(x=seq(1:gorder(enron)), size=4, replace=FALSE)]]
+## get random sample  of edges
+E(enron)[[sample(x=seq(1:gsize(enron)), size=4, replace=FALSE)]]
+
+```
+
+* could be interesting for another time - can go with 't' for now; can go with ukr, since it has direction.
+
+### Back to ukf
+
+```{r}
+## is there any edge between nodes (returns weight if available; otherwise 0=no, 1=yes)
+## how many edges from one node to another
+ukf[76,42]
+## how many edges the other way?
+ukf[42,76]
+
+## show all incidents of edges going out from node 76
+incident(ukf, 76, mode='out')
+## show all edges in or out of 76
+incident(ukf, 76, mode='all')
+
+```
+
+### Node Relationships
+
+###> Key Concepts 02
+
+* Neighbours: nodes immediately adjacent to another node, by direct edge connection.
+    + can specify mode= all/in/out
+    + neighbors(graph, node id, mode=c('all','in','out'))
+* Intersection: use to identify combinations of relaionships around nodes
+    + intersection(neighbor set 1, neighbor set 2)
+* Distance: identify distance between nodes
+    + Diagonal: max distance between nodes within network
+
+#### In-and-Out
+
+```{r}
+## nodes that come IN to 76 (9 in this case)
+neighbors(ukf, 76, mode='in')
+## nodes that 76 goes OUT to (4 in this case)
+neighbors(ukf, 76, mode='out')
+## all nodes INTO or OUT FROM 76 (9+4=13 total)
+neighbors(ukf, 76, mode='all')
+```
+
+(the 'from' here just refers to the id of the graph)
+
+#### Neighbors & Intersections
+
+```{r}
+## nodes that both come out from a specified node and go in to another specified node 
+n1 <- neighbors(ukf, 10, mode='out')
+n2 <- neighbors(ukf, 76, mode='in')
+i1 <- intersection(n1, n2)
+
+n1
+n2
+i1
+```
+
+* These are the nodes can you trace back out of node 76 and back through node 10
+    + they come out of 10 and into 76
+    
+#### Distance
+
+```{r}
+## which nodes are farthest apart?
+farthest_vertices(ukf)
+
+## matrix of distances
+#distances(ukf)
+
+## path sequence between nodes identified in farthest_vertices
+get_diameter(ukf)
+
+## identify nodes that reach selected node within 3 outbound connections
+ego(ukf, order=3, nodes=72 , mode='in')
+
+## all the nodes that are within 3 connections to selected node, either inbound or outbound
+##  (includes all the PREVIOUS plus those reachable out from selected node)
+ego(ukf, order=3, nodes=72, mode='all')
 ```
 
