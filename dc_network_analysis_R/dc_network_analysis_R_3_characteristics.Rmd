@@ -1,0 +1,121 @@
+---
+title: "Network Analytics in R: Chapter 3"
+author: "`r Sys.getenv('USER')`"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      message=FALSE,
+                      warning=FALSE,
+                      fig.height=6,
+                      fig.width=8)
+
+library(igraph)
+library(igraphdata) ## data sets for working with igraph
+
+library(tidyverse)
+library(lubridate)
+library(here)
+library(PerformanceAnalytics)
+library(plotly)
+library(scales)
+library(gridExtra)
+library(DT)
+
+```
+
+## Chapter 3: Characterizing of Network Structures
+
+Notes from DataCamp course ['Network Analysis in R'](https://learn.datacamp.com/courses/network-analysis-in-r) **Chapter 3: Characterizing Network Structures.**
+
+###>  Key Concepts
+
+* Convert data frame to graph
+
+### Get Data
+
+Datacamp exercises use Forrest Gump movie character network data - pairs of actors who appear in at least one scene together. 
+
+* For substitute, using **karate** club network data from **igraphdata** pkg.
+
+```{r}
+## get list of datasets in igraphdata
+#data(package='igraphdata')
+## import data set
+data('karate', package='igraphdata')
+
+## get description of UKfaculty
+karate
+
+```
+
+From this we can tell:
+
+* Undirected graph (U in UNW)
+* Named graph: has 'name' attribute for vertices (N in UNW)
+* Weighted graph (W in UNW)
+* not Bipartite (don't know what this is, not sure it comes up often)
+* 34 vertices
+* 78 edges
+* attributes: 
+    + graph: name (character), Citation (character), Author (character) 
+    + vertices: Faction (number), name (character), label (character), color (number)
+    + edges: weight (edges/number)
+
+[Some explanation in official documentation here](https://igraph.org/r/doc/aaa-igraph-package.html)
+
+To align with Forrest Gump data in Datacamp exercises we need to:
+
+1. convert edges into data frame
+2. drop the weighting to make it unweighted
+3. rename cols to 'V1', 'V2'
+
+```{r}
+gdf <- igraph::as_data_frame(karate, what='edges')
+gdf <- gdf %>% select(-weight) %>% rename(
+  V1=from,
+  V2=to
+)
+```
+
+### Prep / Explore Data
+
+Following along with exercises, convert data frame to graph
+
+```{r}
+g <- graph_from_data_frame(gdf, directed=FALSE)
+```
+
+#### Eigen Centrality
+
+Eigen centrality is a measure of 'connectedness' within the network. Individuals with high eigenvector centrality are those that are highly connected to other highly connected individuals. 
+
+Calculate eigen centrality and identify vertex with highest:
+
+```{r}
+g.ec <- eigen_centrality(g)
+which.max(g.ec$vector)
+```
+
+#### Plot
+
+Plot the network, using eigen centrality to set the size of vertices in the plot.
+
+```{r}
+plot(g,
+     vertex.label.color="blue",
+     vertex.label.cex=0.8,
+     vertex.size=30*(g.ec$vector),
+     edge.color='gray88',
+     main='Karate Club Network')
+```
+
+
+
+
+
