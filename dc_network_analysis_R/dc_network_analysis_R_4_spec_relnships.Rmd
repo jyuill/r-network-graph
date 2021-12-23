@@ -17,6 +17,7 @@ knitr::opts_chunk$set(echo = TRUE,
 
 library(igraph)
 library(igraphdata) ## data sets for working with igraph
+library(threejs) ## used for interactive plots at end
 
 library(tidyverse)
 library(lubridate)
@@ -33,12 +34,15 @@ library(DT)
 
 Notes from DataCamp course ['Network Analysis in R'](https://learn.datacamp.com/courses/network-analysis-in-r) **Chapter 4: Identifying Special Relationships.**
 
-### Key Concepts
+## Key Concepts
 
 * Assortativity: preferential attachwent of vertices to others that share similar attributes (numerical or categorical). Values from -1 to 1. 
 * Reciprocity: proportion of edges that are both directions.
+* Community detection: more advanced approach than assortativity and reciprocity for understanding groups/clusters/communities within a network
+   + fastgreedy.community: like 'inside-out' method
+   + edge.betweenness.community: sort of 'outside-in' method
 
-### Get / Explore Data
+## Get / Explore Data
 
 Datacamp exercises use Forrest Gump movie character network data - pairs of actors who appear in at least one scene together. 
 
@@ -68,14 +72,16 @@ From this we can tell:
 
 [Some explanation in official documentation here](https://igraph.org/r/doc/aaa-igraph-package.html)
 
-### Preview Data
+## Preview Data
 
 ```{r}
 plot(UKfaculty)
 ```
 
 
-### Assortativity & Reciprocity
+## Assortativity & Reciprocity
+
+### Assortativity
 
 Calculate assortativity:
 
@@ -111,9 +117,107 @@ abline(v = observed.assort, col='red', lty=3, lwd=2)
 
 Observed assortativity is not shown because it is beyond range of randomization histogram. So I guess it is relatively HIGH!
 
+### Reciprocity
+
 Check reciprocity
 
 ```{r}
 reciprocity(UKfaculty)
+```
+
+## Community Detection
+
+Back to Karate network data - same as used in DataCamp course.
+
+```{r}
+## import data set
+data('karate', package='igraphdata')
+
+## check data
+karate
+```
+
+### fastgreedy.community
+
+```{r}
+fgc <- fastgreedy.community(karate)
+sizes(fgc)
+membership(fgc)
+plot(fgc, karate)
+```
+
+### edge.betweenness.community
+
+```{r}
+ebc <- edge.betweenness.community(karate)
+sizes(ebc)
+plot(ebc, karate)
+```
+
+### Compare Plots
+
+Plot fastgreedy.community and edge.betweenness.community side by side
+
+```{r}
+par(mfrow=c(1,2))
+plot(fgc, karate)
+plot(ebc, karate)
+
+```
+
+### leading.eigenvector.community
+
+```{r}
+lec <- leading.eigenvector.community(karate)
+sizes(lec)
+plot(lec, karate)
+```
+
+## Network visualizations
+
+Other packages beyond **igraph** can be used:
+
+* statnet
+* ggnet
+* ggnetwork
+* ggraph
+* visNetwork
+* networkD3
+* sigma
+* rgexf (igraph to Gephi)
+* **threejs**
+
+### threejs for interactivity
+
+Using threejs package for interactive network plots.
+
+```{r}
+UKfaculty <- set_vertex_attr(UKfaculty, 'color', value='dodgerblue')
+graphjs(UKfaculty, vertex.size = 1)
+```
+
+Set size based on eigen centrality:
+
+```{r}
+g <- karate
+ec <- as.numeric(eigen_centrality(g)$vector)
+
+v <- 5 * sqrt(ec)
+
+graphjs(g, vertex.size=ec)
+```
+
+Color based on community membership
+
+```{r}
+## create object containing memberships from fastgreedy.community detection above
+i <- membership(fgc)
+## check sizes
+sizes(fgc)
+## add color to each vertex based on community
+karate <- set_vertex_attr(karate, "color", value=c("yellow","red","blue")[i])
+## plot with threejs
+graphjs(karate)
+
 ```
 
