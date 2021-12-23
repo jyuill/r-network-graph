@@ -52,7 +52,7 @@ Datacamp exercises use Forrest Gump movie character network data - pairs of acto
 ## import data set
 data('karate', package='igraphdata')
 
-## get description of UKfaculty
+## get description of karate
 karate
 
 ```

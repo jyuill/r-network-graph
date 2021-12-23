@@ -35,7 +35,8 @@ Notes from DataCamp course ['Network Analysis in R'](https://learn.datacamp.com/
 
 ### Key Concepts
 
-* 
+* Assortativity: preferential attachwent of vertices to others that share similar attributes (numerical or categorical). Values from -1 to 1. 
+* Reciprocity: proportion of edges that are both directions.
 
 ### Get / Explore Data
 
@@ -45,51 +46,74 @@ Datacamp exercises use Forrest Gump movie character network data - pairs of acto
 
 ```{r}
 ## get list of datasets in igraphdata
-#data(package='igraphdata')
+data(package='igraphdata')
 ## import data set
-data('karate', package='igraphdata')
+data('UKfaculty', package='igraphdata')
 
 ## get description of UKfaculty
-karate
+UKfaculty
 ```
 
 From this we can tell:
 
-* Undirected graph (U in UNW)
-* Named graph: has 'name' attribute for vertices (N in UNW)
-* Weighted graph (W in UNW)
-* not Bipartite (don't know what this is, not sure it comes up often)
-* 34 vertices
-* 78 edges
+* Directed graph (D in D-W-)
+* Not named graph: doesn't have 'name' attribute for vertices (no N in DNW)
+* Weighted graph (W in D-W)
+* 81 vertices
+* 817 edges
 * attributes: 
-    + graph: name (character), Citation (character), Author (character) 
-    + vertices: Faction (number), name (character), label (character), color (number)
+    + graph: Type (character), Date (character), Citation (character), Author (character) 
+    + vertices: Group (number)
     + edges: weight (edges/number)
 
 [Some explanation in official documentation here](https://igraph.org/r/doc/aaa-igraph-package.html)
 
-To align with Forrest Gump data in Datacamp exercises we need to:
-
-1. convert edges into data frame
-2. drop the weighting to make it unweighted
-3. rename cols to 'V1', 'V2'
+### Preview Data
 
 ```{r}
-gdf <- igraph::as_data_frame(karate, what='edges')
-gdf <- gdf %>% select(-weight) %>% rename(
-  V1=from,
-  V2=to
-)
+plot(UKfaculty)
 ```
 
-### Prep Data
 
-Following along with exercises, convert data frame to graph
+### Assortativity & Reciprocity
+
+Calculate assortativity:
+
+* 'Group' is only vertex attribute, so will need to use that
+* Group is already numeric, otherwise would have to convert to factor and then numeric 
 
 ```{r}
-g <- graph_from_data_frame(gdf, directed=FALSE)
+assortativity(UKfaculty, V(UKfaculty)$Group)
 ```
 
-### Heading
+```{r}
+assortativity.degree(UKfaculty, directed=TRUE)
+```
 
+### Randomization for Assessment
+
+We now have values for assortativity and assortativity degree but hard to know how meaninful they are until we compare with randomization.
+
+Randomization will help us to assess the values by comparing them to how likely the observed values are. 
+
+```{r}
+observed.assort <- assortativity(UKfaculty, V(UKfaculty)$Group)
+
+results <- vector('list', 1000)
+for(i in 1:10000){
+  results[[i]] <- assortativity(UKfaculty, sample(V(UKfaculty)$Group))
+}
+
+## Plot
+hist(unlist(results))
+abline(v = observed.assort, col='red', lty=3, lwd=2)
+```
+
+Observed assortativity is not shown because it is beyond range of randomization histogram. So I guess it is relatively HIGH!
+
+Check reciprocity
+
+```{r}
+reciprocity(UKfaculty)
+```
 
